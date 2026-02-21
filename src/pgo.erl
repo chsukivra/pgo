@@ -25,6 +25,7 @@
          format_error/1]).
 
 -include("pgo_internal.hrl").
+-include_lib("opentelemetry_api/include/opentelemetry.hrl").
 -include_lib("opentelemetry_api/include/otel_tracer.hrl").
 
 -export_type([result/0,
@@ -132,7 +133,8 @@ query(Query, Params, Options, Conn=#conn{trace=TraceDefault,
 
     %% if the SDK (`opentelemetry' application) isn't running then `with_span` is a no-op.
     %% if the SDK is running then `is_recording' is used so the user can disable the span individually.
-    ?with_span(<<"pgo:query/3">>, #{is_recording => if DoTrace -> true; true -> false end,
+    ?with_span(<<"pgo:query/3">>, #{kind => ?SPAN_KIND_CLIENT,
+                                    is_recording => if DoTrace -> true; true -> false end,
                                     attributes => [{<<"db.statement">>, iolist_to_binary(Query)}
                                                    || IncludeStatement] ++ TraceAttributes},
                fun(_) ->

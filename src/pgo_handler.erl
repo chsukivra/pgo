@@ -105,6 +105,12 @@ open(Pool, PoolConfig) ->
     IncludeStatementDefault = maps:get(include_statement_span_attribute, PoolConfig, true),
     QueueDefault = maps:get(queue, PoolConfig, true),
     DefaultDecodeOpts = maps:get(decode_opts, PoolConfig, []),
+    TraceDbName = case PoolConfig of
+        #{'db.name' := DbName} when is_atom(DbName); is_binary(DbName) ->
+            DbName;
+        #{database := DbName} ->
+            iolist_to_binary(DbName)
+    end,
     case gen_tcp:connect(ConnectHost, ConnectPort, SockOpts ++ [binary, {packet, raw}, {active, false}]) of
         {ok, Socket} ->
             Conn = #conn{pool=Pool,
@@ -113,7 +119,7 @@ open(Pool, PoolConfig) ->
                          parameters=#{},
                          trace=TraceDefault,
                          trace_attributes=[{<<"db.system">>, <<"postgresql">>},
-                                           {<<"db.name">>, iolist_to_binary(maps:get(database, PoolConfig))},
+                                           {<<"db.name">>, TraceDbName},
                                            %% {<<"db.connection_string">>, <<"">>},
                                            {<<"db.user">>, iolist_to_binary(maps:get(user, PoolConfig, ?DEFAULT_USER))},
                                            {<<"net.peer.name">>, iolist_to_binary(Host)},
